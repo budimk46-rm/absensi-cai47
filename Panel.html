@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="api.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+      background: #F6F3EC;
+      color: #1B2A22;
+      padding: 26px 32px 40px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .logo-stack { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .logo-img {
+      width: 56px; height: 56px; border-radius: 50%;
+      object-fit: cover; box-shadow: 0 0 0 2px rgba(20,35,95,0.12);
+      flex-shrink: 0;
+    }
+    .logo-img-cai {
+      height: 50px; width: auto;
+      object-fit: contain;
+      flex-shrink: 0;
+      background: #fff;
+      padding: 6px 9px;
+      border-radius: 12px;
+      box-shadow: 0 0 0 1px rgba(20,35,95,0.08);
+    }
+    .logo-divider {
+      width: 1px; height: 38px; background: rgba(20,35,95,0.15); flex-shrink: 0;
+    }
+    .org-name {
+      font-size: 11.5px; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: #223A94; margin-bottom: 3px;
+    }
+    h1 { font-size: 28px; font-weight: 700; color: #14235F; letter-spacing: -0.01em; }
+    .counter-box { text-align: right; }
+    .counter-value { font-family: 'SF Mono', monospace; font-size: 38px; font-weight: 700; color: #14235F; line-height: 1; }
+    .counter-total { font-size: 20px; color: #8A9690; font-weight: 500; }
+    .counter-label { font-size: 13px; color: #6B7A70; margin-top: 4px; }
+
+    .sesi-bar {
+      background: #fff;
+      border: 1px solid rgba(20,35,95,0.10);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .sesi-bar label { font-size: 12.5px; font-weight: 700; color: #6B7A70; text-transform: uppercase; letter-spacing: 0.04em; }
+    .sesi-select {
+      flex: 1; min-width: 220px;
+      background: #F6F3EC;
+      border: 1px solid rgba(20,35,95,0.14);
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-size: 14.5px;
+      font-family: inherit;
+      color: #1B2A22;
+    }
+
+    .error-banner {
+      background: #FDECE3;
+      border: 1px solid rgba(216,90,48,0.3);
+      color: #9A3F1D;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .body-grid { display: grid; grid-template-columns: 280px 1fr; gap: 22px; align-items: start; }
+    @media (max-width: 760px) { .body-grid { grid-template-columns: 1fr; } }
+
+    .qr-col { display: flex; flex-direction: column; gap: 14px; }
+    .card {
+      background: #fff;
+      border: 1px solid rgba(20,35,95,0.10);
+      border-radius: 16px;
+      padding: 22px;
+    }
+    .card-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #8A9690; margin-bottom: 14px; text-align: center;
+    }
+    #qrcode { background: #fff; display: inline-block; padding: 10px; border-radius: 10px; line-height: 0; }
+    .qr-wrap { text-align: center; }
+    .qr-url { font-family: 'SF Mono', monospace; font-size: 10.5px; color: #8A9690; margin-top: 12px; word-break: break-all; text-align: center; }
+    .qr-hint { font-size: 12.5px; color: #6B7A70; margin-top: 10px; line-height: 1.5; text-align: center; }
+
+    .legend-card { display: flex; flex-direction: column; gap: 14px; }
+    .legend-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+    .legend-label { color: #44544A; font-weight: 600; }
+    .legend-count { font-family: 'SF Mono', monospace; color: #8A9690; }
+    .legend-track { height: 6px; border-radius: 3px; background: rgba(20,35,95,0.08); overflow: hidden; }
+    .legend-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+    .action-row { display: flex; flex-direction: column; gap: 10px; }
+    button { font-family: inherit; cursor: pointer; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 600; }
+    .btn-secondary { background: #fff; border: 1px solid rgba(20,35,95,0.16); color: #1B2A22; }
+    .btn-secondary:hover { background: #F2F8F4; }
+    .btn-ghost-danger { background: transparent; border: 1px solid rgba(216,90,48,0.3); color: #9A3F1D; }
+    .btn-ghost-danger:hover { background: #FDECE3; }
+
+    .main-col { min-width: 0; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+    .tab-btn {
+      background: #fff; border: 1px solid rgba(20,35,95,0.12); color: #6B7A70;
+      border-radius: 999px; padding: 8px 16px; font-size: 13.5px; font-weight: 600;
+    }
+    .tab-btn.active { background: #223A94; border: 1px solid #223A94; color: #fff; }
+
+    .loading-state { color: #8A9690; font-size: 14px; padding: 40px 0; }
+
+    .unsur-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+    .unsur-summary-tile { background: #fff; border: 1px solid rgba(20,35,95,0.10); border-radius: 14px; padding: 14px 16px; }
+    .unsur-summary-name { font-size: 12px; color: #8A9690; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+    .unsur-summary-count { font-family: 'SF Mono', monospace; font-size: 24px; font-weight: 700; color: #14235F; }
+    .unsur-summary-total { font-size: 14px; color: #8A9690; font-weight: 500; }
+
+    .group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .group-tile { background: #fff; border: 1px solid rgba(20,35,95,0.10); border-radius: 12px; padding: 13px 15px; }
+    .group-tile.complete { background: #E7ECFB; border: 1px solid rgba(34,58,148,0.3); }
+    .group-tile-name { font-size: 12px; color: #8A9690; margin-bottom: 5px; }
+    .group-tile-count { font-family: 'SF Mono', monospace; font-size: 20px; font-weight: 700; color: #14235F; }
+    .group-tile-total { font-size: 13px; color: #8A9690; font-weight: 500; }
+
+    .desa-list { display: flex; flex-direction: column; gap: 8px; }
+    .desa-row {
+      background: #fff; border: 1px solid rgba(20,35,95,0.10); border-radius: 12px;
+      padding: 13px 17px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .desa-name { font-size: 14.5px; font-weight: 700; color: #14235F; }
+    .desa-sub { font-size: 12.5px; color: #8A9690; margin-top: 2px; }
+
+    .status-pill { font-family: 'SF Mono', monospace; font-size: 12px; border-radius: 999px; padding: 5px 11px; white-space: nowrap; }
+    .status-hadir { color: #223A94; background: #DCE3F8; border: 1px solid rgba(34,58,148,0.25); }
+    .status-belum { color: #8A9690; background: rgba(20,35,95,0.04); border: 1px solid rgba(20,35,95,0.08); }
+
+    .list-controls { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .search-input, .filter-select {
+      background: #fff; border: 1px solid rgba(20,35,95,0.14); border-radius: 10px;
+      padding: 9px 13px; color: #1B2A22; font-size: 14px; outline: none; font-family: inherit;
+    }
+    .search-input { flex: 1; min-width: 200px; }
+
+    .table-wrap { background: #fff; border: 1px solid rgba(20,35,95,0.10); border-radius: 14px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; font-size: 11.5px; color: #8A9690; font-weight: 700; padding: 11px 16px;
+      border-bottom: 1px solid rgba(20,35,95,0.08); text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    td { padding: 11px 16px; font-size: 13.5px; color: #1B2A22; border-bottom: 1px solid rgba(20,35,95,0.06); }
+    .td-muted { color: #8A9690; font-size: 13px; }
+    .td-action { text-align: right; padding: 7px 16px; }
+    .btn-tiny { background: #fff; border: 1px solid rgba(20,35,95,0.14); color: #44544A; border-radius: 8px; padding: 5px 11px; font-size: 12px; }
+    .empty-state { padding: 26px 16px; color: #8A9690; font-size: 14px; text-align: center; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(22,30,25,0.55); display: none; align-items: center; justify-content: center; z-index: 50; }
+    .modal-overlay.show { display: flex; }
+    .modal-card { background: #fff; border-radius: 16px; padding: 26px; max-width: 380px; margin: 16px; }
+    .modal-card h3 { margin-bottom: 10px; font-size: 17px; font-weight: 700; color: #14235F; }
+    .modal-card p { margin-bottom: 20px; font-size: 14px; color: #6B7A70; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-danger { background: #D85A30; border: 1px solid #D85A30; color: #fff; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-stack">
+        <img class="logo-img-cai" src="logo-cai.png" alt="Logo CAI 47">
+        <div class="logo-divider"></div>
+        <img class="logo-img" src="logo-ppg.jpg" alt="Logo PPG Siduta">
+      </div>
+      <div>
+        <div class="org-name">PPG Siduta - Sidoarjo Utara</div>
+        <h1>CAI 47 2026</h1>
+      </div>
+    </div>
+    <div class="counter-box">
+      <div class="counter-value" id="counterValue">0<span class="counter-total">/0</span></div>
+      <div class="counter-label" id="counterLabel">peserta hadir · 0%</div>
+    </div>
+  </div>
+
+  <div class="sesi-bar">
+    <label>Memantau sesi</label>
+    <select class="sesi-select" id="sesiSelect"></select>
+  </div>
+
+  <div class="error-banner" id="errorBanner"></div>
+
+  <div class="body-grid">
+    <aside class="qr-col">
+      <div class="card">
+        <div class="card-label">Pindai untuk absen</div>
+        <div class="qr-wrap"><div id="qrcode"></div></div>
+        <div class="qr-url" id="qrUrlText"></div>
+        <div class="qr-hint">Peserta scan lalu pilih sendiri sesi, unsur, dan namanya di HP.</div>
+      </div>
+
+      <div class="card legend-card" id="legendCard"></div>
+
+      <div class="action-row">
+        <button class="btn-secondary" onclick="exportCsv()">Unduh rekap (CSV)</button>
+        <button class="btn-ghost-danger" onclick="showResetModal()">Atur ulang semua kehadiran</button>
+      </div>
+    </aside>
+
+    <main class="main-col">
+      <nav class="tabs">
+        <button class="tab-btn active" data-tab="ringkasan" onclick="switchTab('ringkasan')">Ringkasan kelompok</button>
+        <button class="tab-btn" data-tab="desa" onclick="switchTab('desa')">Utusan desa</button>
+        <button class="tab-btn" data-tab="daerah" onclick="switchTab('daerah')">Daerah</button>
+        <button class="tab-btn" data-tab="log" onclick="switchTab('log')">Semua log kehadiran</button>
+      </nav>
+
+      <div id="tabContent"><div class="loading-state">Memuat data kehadiran…</div></div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="resetModal">
+    <div class="modal-card">
+      <h3>Atur ulang semua data kehadiran?</h3>
+      <p>Seluruh log kehadiran di semua sesi untuk CAI 47 2026 akan terhapus. Tindakan ini tidak bisa dibatalkan.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="hideResetModal()">Batal</button>
+        <button class="btn-danger" onclick="confirmReset()">Ya, atur ulang</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // GANTI dengan URL halaman Scan.html Anda di GitHub Pages, contoh:
+    // "https://namauser.github.io/nama-repo/Scan.html"
+    const scanUrl = "GANTI_DENGAN_URL_SCAN_HTML_ANDA";
+
+    let currentTab = 'ringkasan';
+    let sesiList = [];
+    let currentSesi = null;
+    let ringkasan = null;
+    let semuaLog = [];
+    let searchQuery = '';
+    let filterUnsur = 'Semua';
+
+    document.getElementById('qrUrlText').textContent = scanUrl;
+    if (typeof QRCode !== 'undefined') {
+      new QRCode(document.getElementById('qrcode'), {
+        text: scanUrl, width: 196, height: 196,
+        colorDark: '#14235F', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } else {
+      document.getElementById('qrcode').innerHTML =
+        '<div style="padding:30px;color:#9A3F1D;font-size:13px;max-width:180px;">QR code gagal dimuat. Gunakan link di bawah ini secara manual.</div>';
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorBanner');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function hideError() { document.getElementById('errorBanner').style.display = 'none'; }
+
+    function formatTime(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    function formatDateTime(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleString('id-ID');
+    }
+
+    function tebakSesiSekarang(list) {
+      const jam = new Date().getHours();
+      let bagian = 'Pagi';
+      if (jam >= 11 && jam < 15) bagian = 'Siang';
+      else if (jam >= 15) bagian = 'Malam';
+      return list.find(function (s) { return s.indexOf(bagian) !== -1; }) || list[0];
+    }
+
+    function initSesi() {
+      callApi('getDaftarSesi').then(function (data) {
+        sesiList = data;
+        currentSesi = tebakSesiSekarang(sesiList);
+        const sel = document.getElementById('sesiSelect');
+        sel.innerHTML = sesiList.map(function (s) {
+          return '<option value="' + s + '"' + (s === currentSesi ? ' selected' : '') + '>' + s + '</option>';
+        }).join('');
+        sel.addEventListener('change', function () {
+          currentSesi = sel.value;
+          refreshAll();
+        });
+        refreshAll();
+      }).catch(function (err) {
+        showError(err.message);
+      });
+    }
+
+    function refreshAll() {
+      if (!currentSesi) return;
+      callApi('getRingkasanSesi', [currentSesi]).then(function (data) {
+        ringkasan = data;
+        renderHeader();
+        renderLegend();
+        if (currentTab === 'ringkasan') renderRingkasanTab();
+        if (currentTab === 'desa') renderDesaTab();
+        if (currentTab === 'daerah') renderDaerahTab();
+        hideError();
+      }).catch(function () {
+        showError('Tidak bisa memuat data kehadiran. Coba muat ulang halaman ini.');
+      });
+
+      if (currentTab === 'log') loadLog();
+    }
+
+    function loadLog() {
+      callApi('getSemuaKehadiran').then(function (data) {
+        semuaLog = data;
+        renderLogTab();
+        hideError();
+      }).catch(function () {
+        showError('Tidak bisa memuat log kehadiran.');
+      });
+    }
+
+    function renderHeader() {
+      if (!ringkasan) return;
+      const pct = ringkasan.total ? Math.round((ringkasan.hadir / ringkasan.total) * 100) : 0;
+      document.getElementById('counterValue').innerHTML = ringkasan.hadir + '<span class="counter-total">/' + ringkasan.total + '</span>';
+      document.getElementById('counterLabel').textContent = 'hadir di sesi ini · ' + pct + '%';
+    }
+
+    function renderLegend() {
+      if (!ringkasan) return;
+      const colors = { Daerah: '#223A94', Desa: '#BA7517', Kelompok: '#3450AC' };
+      const card = document.getElementById('legendCard');
+      card.innerHTML = ['Daerah', 'Desa', 'Kelompok'].map(function (kat) {
+        const d = ringkasan.byUnsur[kat];
+        const pct = d.total ? Math.round((d.hadir / d.total) * 100) : 0;
+        return '<div><div class="legend-top"><span class="legend-label">' + kat + '</span><span class="legend-count">' + d.hadir + '/' + d.total + '</span></div>' +
+          '<div class="legend-track"><div class="legend-fill" style="width:' + pct + '%;background:' + colors[kat] + '"></div></div></div>';
+      }).join('');
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
+      if (tab === 'ringkasan') renderRingkasanTab();
+      if (tab === 'desa') renderDesaTab();
+      if (tab === 'daerah') renderDaerahTab();
+      if (tab === 'log') loadLog();
+    }
+
+    function renderRingkasanTab() {
+      if (!ringkasan) return;
+      const html = '<div class="unsur-summary">' +
+        ['Daerah', 'Desa', 'Kelompok'].map(function (k) {
+          const d = ringkasan.byUnsur[k];
+          return '<div class="unsur-summary-tile"><div class="unsur-summary-name">' + k + '</div>' +
+            '<div class="unsur-summary-count">' + d.hadir + '<span class="unsur-summary-total">/' + d.total + '</span></div></div>';
+        }).join('') + '</div>' +
+        '<div class="group-grid">' + ringkasan.kelompokRekap.map(function (g) {
+          const complete = g.hadir === g.total;
+          return '<div class="group-tile' + (complete ? ' complete' : '') + '">' +
+            '<div class="group-tile-name">' + escapeHtml(g.desa) + ' · ' + escapeHtml(g.kelompok) + '</div>' +
+            '<div class="group-tile-count">' + g.hadir + '<span class="group-tile-total">/' + g.total + '</span></div></div>';
+        }).join('') + '</div>';
+      document.getElementById('tabContent').innerHTML = html;
+    }
+
+    function renderDesaTab() {
+      if (!ringkasan) return;
+      const html = '<div class="desa-list">' + ringkasan.desaRekap.map(function (d) {
+        const statusHtml = d.sudahHadir
+          ? '<span class="status-pill status-hadir">Hadir · ' + formatTime(d.waktu) + '</span>'
+          : '<span class="status-pill status-belum">Belum hadir</span>';
+        return '<div class="desa-row"><div><div class="desa-name">Desa ' + escapeHtml(d.desa) + '</div><div class="desa-sub">' + escapeHtml(d.nama) + '</div></div>' + statusHtml + '</div>';
+      }).join('') + '</div>';
+      document.getElementById('tabContent').innerHTML = html;
+    }
+
+    function renderDaerahTab() {
+      if (!ringkasan) return;
+      const html = '<div class="desa-list">' + ringkasan.daerahRekap.map(function (d) {
+        const statusHtml = d.sudahHadir
+          ? '<span class="status-pill status-hadir">Hadir · ' + formatTime(d.waktu) + '</span>'
+          : '<span class="status-pill status-belum">Belum hadir</span>';
+        return '<div class="desa-row"><div><div class="desa-name">' + escapeHtml(d.nama) + '</div></div>' + statusHtml + '</div>';
+      }).join('') + '</div>';
+      document.getElementById('tabContent').innerHTML = html;
+    }
+
+    function renderLogTab() {
+      let list = semuaLog.slice().sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+      if (filterUnsur !== 'Semua') list = list.filter(function (r) { return r.unsur === filterUnsur; });
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        list = list.filter(function (r) {
+          return r.nama.toLowerCase().indexOf(q) !== -1 ||
+            (r.desa || '').toLowerCase().indexOf(q) !== -1 ||
+            (r.kelompok || '').toLowerCase().indexOf(q) !== -1 ||
+            r.sesi.toLowerCase().indexOf(q) !== -1;
+        });
+      }
+
+      const controlsHtml =
+        '<div class="list-controls">' +
+        '<input class="search-input" id="searchInput" placeholder="Cari nama, desa, kelompok, atau sesi…" value="' + escapeHtml(searchQuery) + '">' +
+        '<select class="filter-select" id="filterSelect">' +
+        ['Semua', 'Daerah', 'Desa', 'Kelompok'].map(function (k) {
+          return '<option' + (k === filterUnsur ? ' selected' : '') + '>' + k + '</option>';
+        }).join('') + '</select></div>';
+
+      const rowsHtml = list.map(function (r) {
+        return '<tr><td>' + escapeHtml(r.nama) + '</td><td class="td-muted">' + escapeHtml(r.unsur) + '</td>' +
+          '<td class="td-muted">' + escapeHtml([r.desa, r.kelompok].filter(Boolean).join(' / ')) + '</td>' +
+          '<td class="td-muted">' + escapeHtml(r.sesi) + '</td>' +
+          '<td class="td-muted">' + formatDateTime(r.timestamp) + '</td></tr>';
+      }).join('');
+
+      const tableHtml = list.length
+        ? '<div class="table-wrap"><table><thead><tr><th>Nama</th><th>Unsur</th><th>Desa/Kelompok</th><th>Sesi</th><th>Waktu</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>'
+        : '<div class="table-wrap"><div class="empty-state">Belum ada data kehadiran yang cocok.</div></div>';
+
+      document.getElementById('tabContent').innerHTML = controlsHtml + tableHtml;
+
+      document.getElementById('searchInput').addEventListener('input', function (e) { searchQuery = e.target.value; renderLogTab(); });
+      document.getElementById('filterSelect').addEventListener('change', function (e) { filterUnsur = e.target.value; renderLogTab(); });
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+    }
+
+    function showResetModal() { document.getElementById('resetModal').classList.add('show'); }
+    function hideResetModal() { document.getElementById('resetModal').classList.remove('show'); }
+    function confirmReset() {
+      callApi('resetSemuaKehadiran').then(function () {
+        hideResetModal();
+        loadLog();
+        refreshAll();
+      }).catch(function (err) {
+        showError(err.message);
+      });
+    }
+
+    function exportCsv() {
+      callApi('getSemuaKehadiran').then(function (data) {
+        const header = ['Nama', 'Unsur', 'Desa', 'Kelompok', 'Sesi', 'Waktu'];
+        const rows = data.map(function (r) { return [r.nama, r.unsur, r.desa, r.kelompok, r.sesi, formatDateTime(r.timestamp)]; });
+        const csv = [header].concat(rows).map(function (row) {
+          return row.map(function (cell) { return '"' + String(cell || '').replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\\n');
+        const blob = new Blob(['\\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'absensi-cai-47-2026-' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }).catch(function (err) {
+        showError(err.message);
+      });
+    }
+
+    initSesi();
+    setInterval(refreshAll, 4000);
+  </script>
+</body>
+</html>

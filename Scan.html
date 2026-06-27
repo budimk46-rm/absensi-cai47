@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <script src="api.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+      background: #F2F4FA;
+      color: #1A2440;
+      min-height: 100vh;
+    }
+    body { padding-bottom: 28px; }
+
+    /* ---- Header ---- */
+    .topbar {
+      background: linear-gradient(135deg, #223A94 0%, #14235F 100%);
+      color: #fff;
+      padding: 18px 18px 22px;
+      border-radius: 0 0 22px 22px;
+      box-shadow: 0 6px 18px rgba(20,35,95,0.18);
+      position: relative;
+    }
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-img {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.4);
+    }
+    .logo-img-cai {
+      height: 38px;
+      width: auto;
+      object-fit: contain;
+      flex-shrink: 0;
+      background: #fff;
+      padding: 5px 7px;
+      border-radius: 10px;
+    }
+    .logo-stack { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .logo-divider-mobile {
+      width: 1px; height: 28px; background: rgba(255,255,255,0.3); flex-shrink: 0;
+    }
+    .topbar-text { min-width: 0; }
+    .topbar-org {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #C3D2F5;
+      font-weight: 600;
+    }
+    .topbar-event {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-top: 1px;
+    }
+    .breadcrumb {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: rgba(255,255,255,0.78);
+      flex-wrap: wrap;
+    }
+    .crumb-sep { color: rgba(255,255,255,0.4); }
+    .crumb-current { color: #fff; font-weight: 600; }
+
+    /* ---- Content ---- */
+    .content { padding: 20px 18px 0; max-width: 480px; margin: 0 auto; }
+
+    .step-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #14235F;
+      margin-bottom: 4px;
+    }
+    .step-sub {
+      font-size: 13.5px;
+      color: #5F6B85;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: transparent;
+      border: none;
+      color: #223A94;
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 6px 0 14px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* ---- Cards (sesi, unsur, desa, kelompok) ---- */
+    .card-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .pick-card {
+      background: #fff;
+      border: 1px solid rgba(20,35,95,0.10);
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      box-shadow: 0 1px 2px rgba(20,35,95,0.04);
+    }
+    .pick-card:active { transform: scale(0.98); background: #EEF1FB; }
+    .pick-card-title { font-size: 15.5px; font-weight: 600; color: #1A2440; }
+    .pick-card-sub { font-size: 12.5px; color: #7C87A3; margin-top: 2px; }
+    .pick-card-arrow { font-size: 22px; color: #C9CFE0; flex-shrink: 0; margin-left: 10px; }
+    .pick-card.current { border: 1.5px solid #223A94; background: #EEF1FB; }
+    .current-badge {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #223A94;
+      background: #DCE3F8;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+
+    /* ---- Unsur (3 pilihan besar) ---- */
+    .unsur-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .unsur-card {
+      background: #fff;
+      border: 1px solid rgba(20,35,95,0.10);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+      width: 100%;
+      box-shadow: 0 2px 6px rgba(20,35,95,0.05);
+    }
+    .unsur-card:active { transform: scale(0.98); background: #EEF1FB; }
+    .unsur-icon {
+      width: 50px; height: 50px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+      background: #E7ECFB; color: #223A94;
+    }
+    .unsur-title { font-size: 17px; font-weight: 700; color: #14235F; }
+    .unsur-sub { font-size: 12.5px; color: #7C87A3; margin-top: 3px; }
+
+    /* ---- Search ---- */
+    .search-input {
+      width: 100%;
+      background: #fff;
+      border: 1px solid rgba(20,35,95,0.14);
+      border-radius: 13px;
+      padding: 13px 16px;
+      font-size: 15.5px;
+      outline: none;
+      font-family: inherit;
+      margin-bottom: 14px;
+      color: #1A2440;
+    }
+    .search-input:focus { border-color: #223A94; }
+
+    .scan-error {
+      background: #FDECE3;
+      color: #9A3F1D;
+      border-radius: 12px;
+      padding: 11px 15px;
+      font-size: 13.5px;
+      margin-bottom: 14px;
+    }
+    .empty-note { color: #7C87A3; font-size: 14px; padding: 24px 4px; text-align: center; }
+
+    /* ---- Tambah nama baru ---- */
+    .add-new-card {
+      background: #FFFBEF;
+      border: 1.5px dashed #D8B95C;
+      border-radius: 16px;
+      padding: 16px 18px;
+      text-align: center;
+      cursor: pointer;
+      font-family: inherit;
+      width: 100%;
+      color: #8A6A1E;
+      font-weight: 600;
+      font-size: 14.5px;
+      margin-top: 6px;
+    }
+    .add-new-card:active { background: #FBF3DC; }
+
+    /* ---- Form nama baru ---- */
+    .name-form {
+      background: #fff;
+      border: 1px solid rgba(20,35,95,0.10);
+      border-radius: 18px;
+      padding: 24px 20px;
+    }
+    .name-form label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #5F6B85;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .name-form input {
+      width: 100%;
+      border: 1.5px solid rgba(20,35,95,0.16);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+      margin-bottom: 18px;
+      color: #1A2440;
+    }
+    .name-form input:focus { border-color: #223A94; }
+    .slot-hint {
+      background: #E7ECFB;
+      color: #223A94;
+      border-radius: 10px;
+      padding: 9px 13px;
+      font-size: 12.5px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* ---- Buttons ---- */
+    .btn-primary {
+      width: 100%;
+      background: #223A94;
+      border: 1px solid #223A94;
+      color: #fff;
+      border-radius: 13px;
+      padding: 15px 0;
+      font-size: 15.5px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-primary:active { background: #14235F; }
+    .btn-primary:disabled { opacity: 0.6; }
+    .btn-secondary {
+      width: 100%;
+      background: transparent;
+      border: 1.5px solid rgba(20,35,95,0.16);
+      color: #3D4660;
+      border-radius: 13px;
+      padding: 13px 0;
+      font-size: 14.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 10px;
+    }
+
+    /* ---- Center states (loading/confirm/done) ---- */
+    .center-wrap {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 60vh; text-align: center; padding: 0 4px;
+    }
+    .spinner-label { color: #7C87A3; font-size: 15px; }
+    .result-card {
+      background: #fff;
+      border: 1px solid rgba(20,35,95,0.10);
+      border-radius: 20px;
+      padding: 34px 26px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 8px 24px rgba(20,35,95,0.08);
+    }
+    .result-icon {
+      width: 58px; height: 58px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 700; margin: 0 auto 18px;
+    }
+    .result-icon.success { background: #DCE3F8; color: #223A94; }
+    .result-icon.info { background: #FBF1D9; color: #8A6A1E; font-style: italic; }
+    .result-label { font-size: 12.5px; color: #7C87A3; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .result-name { font-size: 21px; font-weight: 700; color: #14235F; margin-bottom: 4px; }
+    .result-meta { font-size: 13px; color: #7C87A3; margin-bottom: 6px; }
+    .result-time { font-family: 'SF Mono', monospace; font-size: 12.5px; color: #7C87A3; margin-bottom: 26px; }
+
+    .confirm-meta { font-size: 13.5px; color: #5F6B85; margin-bottom: 24px; line-height: 1.6; }
+    .confirm-meta b { color: #14235F; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="logo-stack">
+        <img class="logo-img-cai" src="logo-cai.png" alt="Logo CAI 47">
+        <div class="logo-divider-mobile"></div>
+        <img class="logo-img" src="logo-ppg.jpg" alt="Logo PPG Siduta">
+      </div>
+      <div class="topbar-text">
+        <div class="topbar-org">PPG Siduta - Sidoarjo Utara</div>
+        <div class="topbar-event">CAI 47 2026</div>
+      </div>
+    </div>
+    <div class="breadcrumb" id="breadcrumb"></div>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <script>
+    const ORG_NAME = "PPG Siduta - Sidoarjo Utara";
+    const EVENT_NAME = "CAI 47 2026";
+
+    // ---- State ----
+    let state = {
+      step: 'sesi',      // sesi -> unsur -> (desa ->) (kelompok ->) nama -> confirm/newname -> done
+      sesi: null,
+      unsur: null,        // Daerah | Desa | Kelompok
+      desa: null,
+      kelompok: null,
+      selectedPerson: null,
+      searchQuery: '',
+    };
+
+    let sesiList = [];
+    let desaList = [];
+    let kelompokList = [];
+    let personList = [];
+
+    const SESI_ICON_HINT = { Pagi: 'Pagi', Siang: 'Siang', Malam: 'Malam' };
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    // Tebak sesi "saat ini" berdasarkan jam supaya bisa disorot sebagai default
+    function tebakSesiSekarang(list) {
+      const now = new Date();
+      const jam = now.getHours();
+      let bagian = 'Pagi';
+      if (jam >= 11 && jam < 15) bagian = 'Siang';
+      else if (jam >= 15) bagian = 'Malam';
+      const match = list.find(function (s) { return s.indexOf(bagian) !== -1; });
+      return match || null;
+    }
+
+    function renderBreadcrumb() {
+      const parts = [];
+      if (state.sesi) parts.push(state.sesi.replace(' - ', ' · '));
+      if (state.unsur) parts.push(state.unsur);
+      if (state.desa) parts.push(state.desa);
+      if (state.kelompok) parts.push(state.kelompok);
+      const el = document.getElementById('breadcrumb');
+      if (parts.length === 0) {
+        el.innerHTML = '<span>Pilih sesi kehadiran</span>';
+        return;
+      }
+      el.innerHTML = parts
+        .map(function (p, i) {
+          const isLast = i === parts.length - 1;
+          return (i > 0 ? '<span class="crumb-sep">›</span>' : '') +
+            '<span class="' + (isLast ? 'crumb-current' : '') + '">' + escapeHtml(p) + '</span>';
+        })
+        .join('');
+    }
+
+    function goTo(step) {
+      state.step = step;
+      render();
+    }
+
+    function resetToStart() {
+      state = { step: 'sesi', sesi: state.sesi, unsur: null, desa: null, kelompok: null, selectedPerson: null, searchQuery: '' };
+      goTo('unsur');
+    }
+
+    function render() {
+      renderBreadcrumb();
+      const c = document.getElementById('content');
+      if (state.step === 'sesi') return renderStepSesi(c);
+      if (state.step === 'unsur') return renderStepUnsur(c);
+      if (state.step === 'desa') return renderStepDesa(c);
+      if (state.step === 'kelompok') return renderStepKelompok(c);
+      if (state.step === 'nama') return renderStepNama(c);
+      if (state.step === 'checking') return renderChecking(c);
+      if (state.step === 'confirm') return renderConfirm(c);
+      if (state.step === 'newname') return renderNewName(c);
+      if (state.step === 'done') return renderDone(c);
+      if (state.step === 'already') return renderAlready(c);
+    }
+
+    // ---------- STEP: Pilih sesi ----------
+    function renderStepSesi(c) {
+      c.innerHTML =
+        '<div class="step-title">Pilih sesi kehadiran</div>' +
+        '<div class="step-sub">Pilih sesi acara yang sedang Anda hadiri sekarang.</div>' +
+        '<div class="card-grid" id="sesiGrid"></div>';
+
+      if (sesiList.length === 0) {
+        callApi('getDaftarSesi').then(function (data) {
+          sesiList = data;
+          renderSesiCards();
+        }).catch(function (err) {
+          document.getElementById('sesiGrid').innerHTML =
+            '<div class="scan-error">' + escapeHtml(err.message) + '</div>';
+        });
+      } else {
+        renderSesiCards();
+      }
+    }
+
+    function renderSesiCards() {
+      const grid = document.getElementById('sesiGrid');
+      if (!grid) return;
+      const sesiSekarang = tebakSesiSekarang(sesiList);
+      grid.innerHTML = sesiList
+        .map(function (s) {
+          const parts = s.split(' - ');
+          const isCurrent = s === sesiSekarang;
+          return '<button class="pick-card' + (isCurrent ? ' current' : '') + '" data-sesi="' + escapeHtml(s) + '">' +
+            '<div><div class="pick-card-title">' + escapeHtml(parts[0]) + '</div><div class="pick-card-sub">Sesi ' + escapeHtml(parts[1]) + '</div></div>' +
+            '<div style="display:flex;align-items:center;">' + (isCurrent ? '<span class="current-badge">Sekarang</span>' : '') + '<span class="pick-card-arrow">›</span></div>' +
+            '</button>';
+        })
+        .join('');
+      grid.querySelectorAll('.pick-card').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.sesi = btn.dataset.sesi;
+          goTo('unsur');
+        });
+      });
+    }
+
+    // ---------- STEP: Pilih unsur ----------
+    function renderStepUnsur(c) {
+      c.innerHTML =
+        '<button class="back-btn" id="backBtn">‹ Ganti sesi</button>' +
+        '<div class="step-title">Anda dari unsur apa?</div>' +
+        '<div class="step-sub">Pilih salah satu untuk melanjutkan absen.</div>' +
+        '<div class="unsur-grid">' +
+        unsurCard('Daerah', '🕌', 'Perwakilan tingkat Daerah') +
+        unsurCard('Desa', '🏘️', '6 Desa — 1 utusan per desa') +
+        unsurCard('Kelompok', '👥', '31 kelompok di 6 desa') +
+        '</div>';
+
+      document.getElementById('backBtn').addEventListener('click', function () { goTo('sesi'); });
+      c.querySelectorAll('.unsur-card').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.unsur = btn.dataset.unsur;
+          state.desa = null;
+          state.kelompok = null;
+          if (state.unsur === 'Daerah') {
+            loadPersonListDaerah();
+          } else if (state.unsur === 'Desa') {
+            goTo('desa');
+          } else {
+            goTo('desa');
+          }
+        });
+      });
+    }
+
+    function unsurCard(nama, icon, sub) {
+      return '<button class="unsur-card" data-unsur="' + nama + '">' +
+        '<div class="unsur-icon">' + icon + '</div>' +
+        '<div><div class="unsur-title">' + nama + '</div><div class="unsur-sub">' + escapeHtml(sub) + '</div></div>' +
+        '</button>';
+    }
+
+    // ---------- STEP: Pilih desa (untuk unsur Desa & Kelompok) ----------
+    function renderStepDesa(c) {
+      const judul = state.unsur === 'Desa' ? 'Pilih desa' : 'Kelompok dari desa mana?';
+      c.innerHTML =
+        '<button class="back-btn" id="backBtn">‹ Ganti unsur</button>' +
+        '<div class="step-title">' + judul + '</div>' +
+        '<div class="step-sub">Pilih salah satu dari 6 desa.</div>' +
+        '<div class="card-grid" id="desaGrid"></div>';
+
+      document.getElementById('backBtn').addEventListener('click', function () { goTo('unsur'); });
+
+      if (desaList.length === 0) {
+        callApi('getDaftarDesa').then(function (data) {
+          desaList = data;
+          renderDesaCards();
+        }).catch(function (err) {
+          document.getElementById('desaGrid').innerHTML =
+            '<div class="scan-error">' + escapeHtml(err.message) + '</div>';
+        });
+      } else {
+        renderDesaCards();
+      }
+    }
+
+    function renderDesaCards() {
+      const grid = document.getElementById('desaGrid');
+      if (!grid) return;
+      grid.innerHTML = desaList
+        .map(function (d) {
+          return '<button class="pick-card" data-desa="' + escapeHtml(d) + '">' +
+            '<div class="pick-card-title">Desa ' + escapeHtml(d) + '</div>' +
+            '<span class="pick-card-arrow">›</span></button>';
+        })
+        .join('');
+      grid.querySelectorAll('.pick-card').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.desa = btn.dataset.desa;
+          if (state.unsur === 'Desa') {
+            loadPersonListDesa(state.desa);
+          } else {
+            kelompokList = [];
+            goTo('kelompok');
+          }
+        });
+      });
+    }
+
+    // ---------- STEP: Pilih kelompok (untuk unsur Kelompok) ----------
+    function renderStepKelompok(c) {
+      c.innerHTML =
+        '<button class="back-btn" id="backBtn">‹ Ganti desa</button>' +
+        '<div class="step-title">Pilih kelompok</div>' +
+        '<div class="step-sub">Kelompok di Desa ' + escapeHtml(state.desa) + '.</div>' +
+        '<input class="search-input" id="searchKelompok" placeholder="Cari nama kelompok…">' +
+        '<div class="card-grid" id="kelompokGrid"></div>';
+
+      document.getElementById('backBtn').addEventListener('click', function () { goTo('desa'); });
+
+      function doRender() {
+        let list = kelompokList;
+        const q = document.getElementById('searchKelompok').value.trim().toLowerCase();
+        if (q) list = list.filter(function (k) { return k.toLowerCase().indexOf(q) !== -1; });
+        const grid = document.getElementById('kelompokGrid');
+        if (list.length === 0) {
+          grid.innerHTML = '<div class="empty-note">Tidak ketemu kelompok itu.</div>';
+          return;
+        }
+        grid.innerHTML = list
+          .map(function (k) {
+            return '<button class="pick-card" data-kelompok="' + escapeHtml(k) + '">' +
+              '<div class="pick-card-title">' + escapeHtml(k) + '</div>' +
+              '<span class="pick-card-arrow">›</span></button>';
+          })
+          .join('');
+        grid.querySelectorAll('.pick-card').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            state.kelompok = btn.dataset.kelompok;
+            loadPersonListKelompok(state.desa, state.kelompok);
+          });
+        });
+      }
+
+      document.getElementById('searchKelompok').addEventListener('input', doRender);
+
+      if (kelompokList.length === 0) {
+        callApi('getDaftarKelompok', [state.desa]).then(function (data) {
+          kelompokList = data;
+          doRender();
+        }).catch(function (err) {
+          document.getElementById('kelompokGrid').innerHTML =
+            '<div class="scan-error">' + escapeHtml(err.message) + '</div>';
+        });
+      } else {
+        doRender();
+      }
+    }
+
+    // ---------- Load daftar orang per unsur ----------
+    function loadPersonListDaerah() {
+      goTo('nama');
+      document.getElementById('content').innerHTML = '<div class="center-wrap"><div class="spinner-label">Memuat daftar…</div></div>';
+      callApi('getDaftarDaerah').then(function (data) {
+        personList = data;
+        renderStepNama(document.getElementById('content'));
+      }).catch(function (err) {
+        document.getElementById('content').innerHTML =
+          '<div class="center-wrap"><div class="scan-error">' + escapeHtml(err.message) + '</div></div>';
+      });
+    }
+
+    function loadPersonListDesa(desa) {
+      goTo('nama');
+      document.getElementById('content').innerHTML = '<div class="center-wrap"><div class="spinner-label">Memuat daftar…</div></div>';
+      callApi('getDaftarOrangDesa', [desa]).then(function (data) {
+        personList = data;
+        renderStepNama(document.getElementById('content'));
+      }).catch(function (err) {
+        document.getElementById('content').innerHTML =
+          '<div class="center-wrap"><div class="scan-error">' + escapeHtml(err.message) + '</div></div>';
+      });
+    }
+
+    function loadPersonListKelompok(desa, kelompok) {
+      goTo('nama');
+      document.getElementById('content').innerHTML = '<div class="center-wrap"><div class="spinner-label">Memuat daftar…</div></div>';
+      callApi('getDaftarOrangKelompok', [desa, kelompok]).then(function (data) {
+        personList = data;
+        renderStepNama(document.getElementById('content'));
+      }).catch(function (err) {
+        document.getElementById('content').innerHTML =
+          '<div class="center-wrap"><div class="scan-error">' + escapeHtml(err.message) + '</div></div>';
+      });
+    }
+
+    // ---------- STEP: Pilih nama orang ----------
+    function renderStepNama(c) {
+      const backLabel = state.unsur === 'Daerah' ? '‹ Ganti unsur' : (state.unsur === 'Desa' ? '‹ Ganti desa' : '‹ Ganti kelompok');
+      const judul = state.unsur === 'Kelompok' ? 'Pilih nama di kelompok ini' : 'Pilih nama';
+
+      c.innerHTML =
+        '<button class="back-btn" id="backBtn">' + backLabel + '</button>' +
+        '<div class="step-title">' + judul + '</div>' +
+        '<div class="step-sub">Tap nama Anda, lalu tandai hadir.</div>' +
+        '<input class="search-input" id="searchNama" placeholder="Cari nama…">' +
+        '<div class="card-grid" id="namaGrid"></div>' +
+        '<button class="add-new-card" id="addNewBtn">+ Nama saya tidak ada di daftar</button>';
+
+      document.getElementById('backBtn').addEventListener('click', function () {
+        if (state.unsur === 'Daerah') goTo('unsur');
+        else if (state.unsur === 'Desa') goTo('desa');
+        else goTo('kelompok');
+      });
+
+      document.getElementById('addNewBtn').addEventListener('click', function () {
+        state.selectedPerson = null;
+        goTo('newname');
+      });
+
+      function doRenderList() {
+        let list = personList;
+        const q = document.getElementById('searchNama').value.trim().toLowerCase();
+        if (q) list = list.filter(function (p) { return p.nama.toLowerCase().indexOf(q) !== -1; });
+        const grid = document.getElementById('namaGrid');
+        if (list.length === 0) {
+          grid.innerHTML = '<div class="empty-note">Tidak ketemu. Coba kata lain, atau tambah nama baru di bawah.</div>';
+          return;
+        }
+        grid.innerHTML = list
+          .map(function (p) {
+            const isSlot = p.slotKosong;
+            const subLabel = isSlot ? 'Slot belum diisi — tap untuk isi nama' : '';
+            return '<button class="pick-card" data-id="' + p.id + '">' +
+              '<div><div class="pick-card-title">' + escapeHtml(p.nama) + '</div>' +
+              (subLabel ? '<div class="pick-card-sub">' + subLabel + '</div>' : '') + '</div>' +
+              '<span class="pick-card-arrow">›</span></button>';
+          })
+          .join('');
+        grid.querySelectorAll('.pick-card').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            const person = personList.find(function (p) { return p.id === btn.dataset.id; });
+            if (!person) return;
+            state.selectedPerson = person;
+            if (person.slotKosong) {
+              goTo('newname');
+            } else {
+              checkAndConfirm(person);
+            }
+          });
+        });
+      }
+
+      document.getElementById('searchNama').addEventListener('input', doRenderList);
+      doRenderList();
+    }
+
+    // ---------- Cek status lalu tampilkan konfirmasi / sudah hadir ----------
+    function checkAndConfirm(person) {
+      goTo('checking');
+      callApi('cekSudahAbsen', [person.id, state.sesi]).then(function (result) {
+        if (result.sudahAbsen) {
+          showAlready(person.nama, result.waktu);
+        } else {
+          showConfirm(person);
+        }
+      }).catch(function () {
+        showConfirm(person, 'Tidak bisa memeriksa data. Periksa koneksi internet Anda.');
+      });
+    }
+
+    function renderChecking(c) {
+      c.innerHTML = '<div class="center-wrap"><div class="spinner-label">Memeriksa data…</div></div>';
+    }
+
+    let pendingError = '';
+    function showConfirm(person, err) {
+      pendingError = err || '';
+      state.step = 'confirm';
+      render();
+    }
+
+    function renderConfirm(c) {
+      const p = state.selectedPerson;
+      c.innerHTML =
+        '<div class="center-wrap"><div class="result-card">' +
+        '<div class="result-label">Konfirmasi kehadiran</div>' +
+        '<div class="result-name">' + escapeHtml(p.nama) + '</div>' +
+        '<div class="confirm-meta">' + buildConfirmMeta() + '</div>' +
+        (pendingError ? '<div class="scan-error">' + escapeHtml(pendingError) + '</div>' : '') +
+        '<button class="btn-primary" id="confirmBtn">Ya, ini saya — tandai hadir</button>' +
+        '<button class="btn-secondary" id="cancelBtn">Bukan saya, kembali</button>' +
+        '</div></div>';
+
+      document.getElementById('confirmBtn').addEventListener('click', function () {
+        const btn = document.getElementById('confirmBtn');
+        btn.disabled = true;
+        btn.textContent = 'Menyimpan…';
+        callApi('tandaiHadir', [p.id, state.sesi, '', 'peserta']).then(function (result) {
+          btn.disabled = false;
+          btn.textContent = 'Ya, ini saya — tandai hadir';
+          if (!result.ok) {
+            pendingError = result.message || 'Gagal menyimpan. Coba lagi.';
+            render();
+          } else if (result.alreadyMarked) {
+            showAlready(result.nama, result.waktu);
+          } else {
+            showDone(result.nama, result.waktu);
+          }
+        }).catch(function () {
+          btn.disabled = false;
+          btn.textContent = 'Ya, ini saya — tandai hadir';
+          pendingError = 'Absen gagal tersimpan. Periksa koneksi internet, lalu coba lagi.';
+          render();
+        });
+      });
+
+      document.getElementById('cancelBtn').addEventListener('click', function () {
+        goTo('nama');
+      });
+    }
+
+    function buildConfirmMeta() {
+      const bits = [];
+      bits.push('Sesi <b>' + escapeHtml(state.sesi) + '</b>');
+      if (state.unsur === 'Kelompok') bits.push('Kelompok <b>' + escapeHtml(state.kelompok) + '</b>, Desa ' + escapeHtml(state.desa));
+      else if (state.unsur === 'Desa') bits.push('Desa <b>' + escapeHtml(state.desa) + '</b>');
+      else bits.push('Unsur <b>Daerah</b>');
+      return bits.join(' · ');
+    }
+
+    // ---------- STEP: Isi nama baru ----------
+    function renderNewName(c) {
+      const isSlotFill = state.selectedPerson && state.selectedPerson.slotKosong;
+      c.innerHTML =
+        '<button class="back-btn" id="backBtn">‹ Kembali</button>' +
+        '<div class="step-title">' + (isSlotFill ? 'Isi nama Anda' : 'Tambah nama baru') + '</div>' +
+        '<div class="step-sub">' + buildConfirmMeta() + '</div>' +
+        '<div class="name-form">' +
+        (isSlotFill
+          ? '<div class="slot-hint">Slot "' + escapeHtml(state.selectedPerson.nama) + '" belum punya nama. Isi nama lengkap Anda untuk mengisi slot ini.</div>'
+          : '') +
+        '<label>Nama lengkap</label>' +
+        '<input id="namaBaruInput" type="text" placeholder="Tulis nama lengkap…" autofocus>' +
+        (pendingError ? '<div class="scan-error">' + escapeHtml(pendingError) + '</div>' : '') +
+        '<button class="btn-primary" id="saveNewBtn">Simpan dan tandai hadir</button>' +
+        '</div>';
+
+      document.getElementById('backBtn').addEventListener('click', function () {
+        goTo('nama');
+      });
+
+      document.getElementById('saveNewBtn').addEventListener('click', function () {
+        const nama = document.getElementById('namaBaruInput').value.trim();
+        if (!nama) {
+          pendingError = 'Nama tidak boleh kosong.';
+          render();
+          return;
+        }
+        const btn = document.getElementById('saveNewBtn');
+        btn.disabled = true;
+        btn.textContent = 'Menyimpan…';
+
+        if (isSlotFill) {
+          callApi('tandaiHadir', [state.selectedPerson.id, state.sesi, nama, 'peserta']).then(function (result) {
+            handleSaveResult(result);
+          }).catch(function () {
+            btn.disabled = false;
+            btn.textContent = 'Simpan dan tandai hadir';
+            pendingError = 'Gagal menyimpan. Periksa koneksi internet, lalu coba lagi.';
+            render();
+          });
+        } else {
+          callApi('tambahOrangBaruDanAbsen', [state.unsur, state.desa, state.kelompok, nama, state.sesi, 'peserta']).then(function (result) {
+            handleSaveResult(result);
+          }).catch(function () {
+            btn.disabled = false;
+            btn.textContent = 'Simpan dan tandai hadir';
+            pendingError = 'Gagal menyimpan. Periksa koneksi internet, lalu coba lagi.';
+            render();
+          });
+        }
+      });
+    }
+
+    function handleSaveResult(result) {
+      pendingError = '';
+      if (!result.ok) {
+        pendingError = result.message || 'Gagal menyimpan.';
+        render();
+        return;
+      }
+      if (result.alreadyMarked) {
+        showAlready(result.nama, result.waktu);
+      } else {
+        showDone(result.nama, result.waktu);
+      }
+    }
+
+    // ---------- STEP: Selesai / sudah hadir ----------
+    function showDone(nama, waktu) {
+      state.doneNama = nama;
+      state.doneWaktu = waktu;
+      goTo('done');
+    }
+    function showAlready(nama, waktu) {
+      state.doneNama = nama;
+      state.doneWaktu = waktu;
+      goTo('already');
+    }
+
+    function renderDone(c) {
+      c.innerHTML =
+        '<div class="center-wrap"><div class="result-card">' +
+        '<div class="result-icon success">✓</div>' +
+        '<div class="result-label">Hadir tercatat</div>' +
+        '<div class="result-name">' + escapeHtml(state.doneNama) + '</div>' +
+        '<div class="result-meta">' + escapeHtml(state.sesi) + '</div>' +
+        '<div class="result-time">' + formatTime(state.doneWaktu) + '</div>' +
+        '<button class="btn-primary" id="doneBtn">Selesai</button>' +
+        '</div></div>';
+      document.getElementById('doneBtn').addEventListener('click', resetToStart);
+    }
+
+    function renderAlready(c) {
+      c.innerHTML =
+        '<div class="center-wrap"><div class="result-card">' +
+        '<div class="result-icon info">i</div>' +
+        '<div class="result-label">Sudah tercatat hadir</div>' +
+        '<div class="result-name">' + escapeHtml(state.doneNama) + '</div>' +
+        '<div class="result-meta">' + escapeHtml(state.sesi) + '</div>' +
+        '<div class="result-time">sejak ' + formatTime(state.doneWaktu) + '</div>' +
+        '<button class="btn-primary" id="alreadyBtn">Kembali ke awal</button>' +
+        '</div></div>';
+      document.getElementById('alreadyBtn').addEventListener('click', resetToStart);
+    }
+
+    render();
+  </script>
+</body>
+</html>

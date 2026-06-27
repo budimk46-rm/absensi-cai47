@@ -15,7 +15,7 @@
 // deployments.
 // ============================================================
 
-const APPS_SCRIPT_URL = "GANTI_DENGAN_URL_WEB_APP_ANDA";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzc0hB6uSxSYPs0FvDbqUXSB_NAws9RCd22VLxiSNxi0vtnrDfxbmNOa4jsQP3D-iCo/exec";
 
 /**
  * Memanggil 1 fungsi backend lewat Apps Script API.

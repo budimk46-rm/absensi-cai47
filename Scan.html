@@ -415,6 +415,7 @@
       if (state.step === 'unsur') return renderStepUnsur(c);
       if (state.step === 'desa') return renderStepDesa(c);
       if (state.step === 'kelompok') return renderStepKelompok(c);
+      if (state.step === 'jenisKelaminPanitia') return renderStepJenisKelaminPanitia(c);
       if (state.step === 'nama') return renderStepNama(c);
       if (state.step === 'checking') return renderChecking(c);
       if (state.step === 'confirm') return renderConfirm(c);
@@ -475,6 +476,7 @@
         unsurCard('Daerah', '🕌', 'Perwakilan tingkat Daerah') +
         unsurCard('Desa', '🏘️', '6 Desa — 1 utusan per desa') +
         unsurCard('Kelompok', '👥', '31 kelompok di 6 desa') +
+        unsurCard('Panitia', '🎗️', 'Panitia laki-laki dan perempuan') +
         '</div>';
 
       document.getElementById('backBtn').addEventListener('click', function () { goTo('sesi'); });
@@ -485,8 +487,8 @@
           state.kelompok = null;
           if (state.unsur === 'Daerah') {
             loadPersonListDaerah();
-          } else if (state.unsur === 'Desa') {
-            goTo('desa');
+          } else if (state.unsur === 'Panitia') {
+            goTo('jenisKelaminPanitia');
           } else {
             goTo('desa');
           }
@@ -635,10 +637,53 @@
       });
     }
 
+    // ---------- STEP: Pilih jenis kelamin panitia ----------
+    function renderStepJenisKelaminPanitia(c) {
+      c.innerHTML =
+        '<button class="back-btn" id="backBtn">‹ Ganti unsur</button>' +
+        '<div class="step-title">Panitia bagian apa?</div>' +
+        '<div class="step-sub">Pilih kelompok panitia Anda.</div>' +
+        '<div class="unsur-grid">' +
+        '<button class="unsur-card" data-jenis="Laki-laki">' +
+          '<div class="unsur-icon">🧑</div>' +
+          '<div><div class="unsur-title">Laki-laki</div><div class="unsur-sub">Panitia putra</div></div>' +
+        '</button>' +
+        '<button class="unsur-card" data-jenis="Perempuan">' +
+          '<div class="unsur-icon">👩</div>' +
+          '<div><div class="unsur-title">Perempuan</div><div class="unsur-sub">Keputrian / Panitia putri</div></div>' +
+        '</button>' +
+        '</div>';
+
+      document.getElementById('backBtn').addEventListener('click', function () { goTo('unsur'); });
+      c.querySelectorAll('.unsur-card').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.desa = btn.dataset.jenis; // pakai field desa sebagai sub-kategori
+          loadPersonListPanitia(btn.dataset.jenis);
+        });
+      });
+    }
+
+    function loadPersonListPanitia(jenisKelamin) {
+      goTo('nama');
+      document.getElementById('content').innerHTML = '<div class="center-wrap"><div class="spinner-label">Memuat daftar…</div></div>';
+      callApi('getDaftarOrangPanitia', [jenisKelamin]).then(function (data) {
+        personList = data;
+        renderStepNama(document.getElementById('content'));
+      }).catch(function (err) {
+        document.getElementById('content').innerHTML =
+          '<div class="center-wrap"><div class="scan-error">' + escapeHtml(err.message) + '</div></div>';
+      });
+    }
+
     // ---------- STEP: Pilih nama orang ----------
     function renderStepNama(c) {
-      const backLabel = state.unsur === 'Daerah' ? '‹ Ganti unsur' : (state.unsur === 'Desa' ? '‹ Ganti desa' : '‹ Ganti kelompok');
-      const judul = state.unsur === 'Kelompok' ? 'Pilih nama di kelompok ini' : 'Pilih nama';
+      const backLabel = state.unsur === 'Daerah' ? '‹ Ganti unsur'
+        : state.unsur === 'Desa' ? '‹ Ganti desa'
+        : state.unsur === 'Panitia' ? '‹ Ganti jenis panitia'
+        : '‹ Ganti kelompok';
+      const judul = state.unsur === 'Kelompok' ? 'Pilih nama di kelompok ini'
+        : state.unsur === 'Panitia' ? 'Pilih nama panitia'
+        : 'Pilih nama';
 
       c.innerHTML =
         '<button class="back-btn" id="backBtn">' + backLabel + '</button>' +
@@ -651,6 +696,7 @@
       document.getElementById('backBtn').addEventListener('click', function () {
         if (state.unsur === 'Daerah') goTo('unsur');
         else if (state.unsur === 'Desa') goTo('desa');
+        else if (state.unsur === 'Panitia') goTo('jenisKelaminPanitia');
         else goTo('kelompok');
       });
 
@@ -766,6 +812,7 @@
       bits.push('Sesi <b>' + escapeHtml(state.sesi) + '</b>');
       if (state.unsur === 'Kelompok') bits.push('Kelompok <b>' + escapeHtml(state.kelompok) + '</b>, Desa ' + escapeHtml(state.desa));
       else if (state.unsur === 'Desa') bits.push('Desa <b>' + escapeHtml(state.desa) + '</b>');
+      else if (state.unsur === 'Panitia') bits.push('Panitia <b>' + escapeHtml(state.desa) + '</b>');
       else bits.push('Unsur <b>Daerah</b>');
       return bits.join(' · ');
     }

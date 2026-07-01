@@ -15,7 +15,7 @@
 // deployments.
 // ============================================================
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzc0hB6uSxSYPs0FvDbqUXSB_NAws9RCd22VLxiSNxi0vtnrDfxbmNOa4jsQP3D-iCo/exec";
+const APPS_SCRIPT_URL = "const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbypJlVyCGhaWyMe584iDOh2nrsSb2iwL8eUGvcBix0hTet_PoTcSznrjqd7EKsOCCiQ/exec";";
 
 /**
  * Memanggil 1 fungsi backend lewat Apps Script API.

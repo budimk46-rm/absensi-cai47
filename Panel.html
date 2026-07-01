@@ -128,8 +128,8 @@
 
     .unsur-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
     .unsur-summary-tile { background: #fff; border: 1px solid rgba(20,35,95,0.10); border-radius: 14px; padding: 14px 16px; }
-    .unsur-summary-name { font-size: 12px; color: #8A9690; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
-    .unsur-summary-count { font-family: 'SF Mono', monospace; font-size: 24px; font-weight: 700; color: #14235F; }
+    .unsur-summary-name { font-size: 12px; color: #0D1117; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+    .unsur-summary-count { font-family: 'SF Mono', monospace; font-size: 24px; font-weight: 700; color: #0D1117; }
     .unsur-summary-total { font-size: 14px; color: #8A9690; font-weight: 500; }
 
     .group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
@@ -138,6 +138,31 @@
     .group-tile-name { font-size: 12px; color: #8A9690; margin-bottom: 5px; }
     .group-tile-count { font-family: 'SF Mono', monospace; font-size: 20px; font-weight: 700; color: #14235F; }
     .group-tile-total { font-size: 13px; color: #8A9690; font-weight: 500; }
+
+    /* Layout 6 kolom per desa */
+    .desa-cols-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+    @media (max-width: 1100px) { .desa-cols-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 680px)  { .desa-cols-grid { grid-template-columns: repeat(2, 1fr); } }
+    .desa-col { display: flex; flex-direction: column; gap: 6px; }
+    .desa-col-header {
+      background: #223A94; color: #fff;
+      border-radius: 10px; padding: 10px 12px; margin-bottom: 2px;
+    }
+    .desa-col-title { font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+    .desa-col-stat { font-family: 'SF Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 3px; }
+    .ktile {
+      background: #fff; border: 1px solid rgba(20,35,95,0.10);
+      border-radius: 10px; padding: 10px 12px;
+    }
+    .ktile-done { background: #E7ECFB; border: 1px solid rgba(34,58,148,0.3); }
+    .ktile-name { font-size: 11.5px; color: #0D1117; margin-bottom: 4px; font-weight: 500; }
+    .ktile-count { font-family: 'SF Mono', monospace; font-size: 18px; font-weight: 700; color: #0D1117; line-height: 1; }
+    .ktile-total { font-size: 12px; color: #8A9690; font-weight: 500; }
 
     .desa-list { display: flex; flex-direction: column; gap: 8px; }
     .desa-row {
@@ -373,19 +398,53 @@
 
     function renderRingkasanTab() {
       if (!ringkasan) return;
-      const html = '<div class="unsur-summary">' +
-        ['Daerah', 'Desa', 'Kelompok', 'Panitia'].map(function (k) {
-          const d = ringkasan.byUnsur[k];
-          if (!d) return '';
-          return '<div class="unsur-summary-tile"><div class="unsur-summary-name">' + k + '</div>' +
-            '<div class="unsur-summary-count">' + d.hadir + '<span class="unsur-summary-total">/' + d.total + '</span></div></div>';
-        }).join('') + '</div>' +
-        '<div class="group-grid">' + ringkasan.kelompokRekap.map(function (g) {
+
+      // Kelompokkan data per desa
+      const desaMap = {};
+      ringkasan.kelompokRekap.forEach(function (g) {
+        if (!desaMap[g.desa]) desaMap[g.desa] = [];
+        desaMap[g.desa].push(g);
+      });
+
+      // Urutan desa sesuai data (BARAT 1, BARAT 2, TENGAH 1, TENGAH 2, TIMUR 1, TIMUR 2)
+      const desaUrut = Object.keys(desaMap).sort(function (a, b) {
+        return a.localeCompare(b, 'id', { numeric: true });
+      });
+
+      const kolomHtml = desaUrut.map(function (desa) {
+        const kelompokList = desaMap[desa];
+        const totalDesa = kelompokList.reduce(function (s, g) { return s + g.total; }, 0);
+        const hadirDesa = kelompokList.reduce(function (s, g) { return s + g.hadir; }, 0);
+        const pct = totalDesa ? Math.round((hadirDesa / totalDesa) * 100) : 0;
+
+        const tilesHtml = kelompokList.map(function (g) {
           const complete = g.hadir === g.total;
-          return '<div class="group-tile' + (complete ? ' complete' : '') + '">' +
-            '<div class="group-tile-name">' + escapeHtml(g.desa) + ' · ' + escapeHtml(g.kelompok) + '</div>' +
-            '<div class="group-tile-count">' + g.hadir + '<span class="group-tile-total">/' + g.total + '</span></div></div>';
-        }).join('') + '</div>';
+          return '<div class="ktile' + (complete ? ' ktile-done' : '') + '">' +
+            '<div class="ktile-name">' + escapeHtml(g.kelompok) + '</div>' +
+            '<div class="ktile-count">' + g.hadir + '<span class="ktile-total">/' + g.total + '</span></div>' +
+            '</div>';
+        }).join('');
+
+        return '<div class="desa-col">' +
+          '<div class="desa-col-header">' +
+            '<div class="desa-col-title">' + escapeHtml(desa) + '</div>' +
+            '<div class="desa-col-stat">' + hadirDesa + '/' + totalDesa + ' · ' + pct + '%</div>' +
+          '</div>' +
+          tilesHtml +
+          '</div>';
+      }).join('');
+
+      const html =
+        '<div class="unsur-summary">' +
+          ['Daerah', 'Desa', 'Kelompok', 'Panitia'].map(function (k) {
+            const d = ringkasan.byUnsur[k];
+            if (!d) return '';
+            return '<div class="unsur-summary-tile"><div class="unsur-summary-name">' + k + '</div>' +
+              '<div class="unsur-summary-count">' + d.hadir + '<span class="unsur-summary-total">/' + d.total + '</span></div></div>';
+          }).join('') +
+        '</div>' +
+        '<div class="desa-cols-grid">' + kolomHtml + '</div>';
+
       document.getElementById('tabContent').innerHTML = html;
     }
 

@@ -126,7 +126,7 @@
 
     .loading-state { color: #8A9690; font-size: 14px; padding: 40px 0; }
 
-    .unsur-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+    .unsur-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
     .unsur-summary-tile { background: #fff; border: 1px solid rgba(20,35,95,0.10); border-radius: 14px; padding: 14px 16px; }
     .unsur-summary-name { font-size: 12px; color: #8A9690; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
     .unsur-summary-count { font-family: 'SF Mono', monospace; font-size: 24px; font-weight: 700; color: #14235F; }
@@ -227,6 +227,7 @@
         <button class="tab-btn active" data-tab="ringkasan" onclick="switchTab('ringkasan')">Ringkasan kelompok</button>
         <button class="tab-btn" data-tab="desa" onclick="switchTab('desa')">Utusan desa</button>
         <button class="tab-btn" data-tab="daerah" onclick="switchTab('daerah')">Daerah</button>
+        <button class="tab-btn" data-tab="panitia" onclick="switchTab('panitia')">Panitia</button>
         <button class="tab-btn" data-tab="log" onclick="switchTab('log')">Semua log kehadiran</button>
       </nav>
 
@@ -248,7 +249,7 @@
   <script>
     // GANTI dengan URL halaman Scan.html Anda di GitHub Pages, contoh:
     // "https://namauser.github.io/nama-repo/Scan.html"
-    const scanUrl = "https://budimk46-rm.github.io/absensi-cai47/Scan.html";
+    const scanUrl = "GANTI_DENGAN_URL_SCAN_HTML_ANDA";
 
     let currentTab = 'ringkasan';
     let sesiList = [];
@@ -321,6 +322,7 @@
         if (currentTab === 'ringkasan') renderRingkasanTab();
         if (currentTab === 'desa') renderDesaTab();
         if (currentTab === 'daerah') renderDaerahTab();
+        if (currentTab === 'panitia') renderPanitiaTab();
         hideError();
       }).catch(function () {
         showError('Tidak bisa memuat data kehadiran. Coba muat ulang halaman ini.');
@@ -348,10 +350,11 @@
 
     function renderLegend() {
       if (!ringkasan) return;
-      const colors = { Daerah: '#223A94', Desa: '#BA7517', Kelompok: '#3450AC' };
+      const colors = { Daerah: '#223A94', Desa: '#BA7517', Kelompok: '#3450AC', Panitia: '#6B35AC' };
       const card = document.getElementById('legendCard');
-      card.innerHTML = ['Daerah', 'Desa', 'Kelompok'].map(function (kat) {
+      card.innerHTML = ['Daerah', 'Desa', 'Kelompok', 'Panitia'].map(function (kat) {
         const d = ringkasan.byUnsur[kat];
+        if (!d) return '';
         const pct = d.total ? Math.round((d.hadir / d.total) * 100) : 0;
         return '<div><div class="legend-top"><span class="legend-label">' + kat + '</span><span class="legend-count">' + d.hadir + '/' + d.total + '</span></div>' +
           '<div class="legend-track"><div class="legend-fill" style="width:' + pct + '%;background:' + colors[kat] + '"></div></div></div>';
@@ -364,14 +367,16 @@
       if (tab === 'ringkasan') renderRingkasanTab();
       if (tab === 'desa') renderDesaTab();
       if (tab === 'daerah') renderDaerahTab();
+      if (tab === 'panitia') renderPanitiaTab();
       if (tab === 'log') loadLog();
     }
 
     function renderRingkasanTab() {
       if (!ringkasan) return;
       const html = '<div class="unsur-summary">' +
-        ['Daerah', 'Desa', 'Kelompok'].map(function (k) {
+        ['Daerah', 'Desa', 'Kelompok', 'Panitia'].map(function (k) {
           const d = ringkasan.byUnsur[k];
+          if (!d) return '';
           return '<div class="unsur-summary-tile"><div class="unsur-summary-name">' + k + '</div>' +
             '<div class="unsur-summary-count">' + d.hadir + '<span class="unsur-summary-total">/' + d.total + '</span></div></div>';
         }).join('') + '</div>' +
@@ -406,6 +411,26 @@
       document.getElementById('tabContent').innerHTML = html;
     }
 
+    function renderPanitiaTab() {
+      if (!ringkasan || !ringkasan.panitiaRekap) return;
+      const html = ringkasan.panitiaRekap.map(function (grup) {
+        const anggotaHtml = grup.anggota.map(function (a) {
+          const statusHtml = a.sudahHadir
+            ? '<span class="status-pill status-hadir">Hadir · ' + formatTime(a.waktu) + '</span>'
+            : '<span class="status-pill status-belum">Belum hadir</span>';
+          return '<div class="desa-row">' +
+            '<div><div class="desa-name">' + escapeHtml(a.nama) + '</div></div>' +
+            statusHtml + '</div>';
+        }).join('');
+        return '<div style="margin-bottom:20px;">' +
+          '<div style="font-size:12px;font-weight:700;color:#7C87A3;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">' +
+          escapeHtml(grup.jenis) + ' — ' + grup.hadir + '/' + grup.total + ' hadir</div>' +
+          '<div class="desa-list">' + anggotaHtml + '</div>' +
+          '</div>';
+      }).join('');
+      document.getElementById('tabContent').innerHTML = html || '<div class="empty-state">Tidak ada data panitia.</div>';
+    }
+
     function renderLogTab() {
       let list = semuaLog.slice().sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
       if (filterUnsur !== 'Semua') list = list.filter(function (r) { return r.unsur === filterUnsur; });
@@ -423,7 +448,7 @@
         '<div class="list-controls">' +
         '<input class="search-input" id="searchInput" placeholder="Cari nama, desa, kelompok, atau sesi…" value="' + escapeHtml(searchQuery) + '">' +
         '<select class="filter-select" id="filterSelect">' +
-        ['Semua', 'Daerah', 'Desa', 'Kelompok'].map(function (k) {
+        ['Semua', 'Daerah', 'Desa', 'Kelompok', 'Panitia'].map(function (k) {
           return '<option' + (k === filterUnsur ? ' selected' : '') + '>' + k + '</option>';
         }).join('') + '</select></div>';
 

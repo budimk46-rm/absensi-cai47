@@ -368,14 +368,232 @@
     }
 
     // Tebak sesi "saat ini" berdasarkan jam supaya bisa disorot sebagai default
-    function tebakSesiSekarang(list) {
+    // ---------- Jadwal sesi acara ----------
+    // Absensi hanya bisa dilakukan dalam rentang jam berikut.
+    // Di luar jam ini, peserta mendapat notifikasi dan tidak bisa lanjut.
+    const JADWAL_SESI = {
+      'Pagi'  : { buka: 6,    tutup: 12   },  // 06.00 - 12.00
+      'Siang' : { buka: 12,   tutup: 15.5 },  // 12.00 - 15.30
+      'Malam' : { buka: 18,   tutup: 22   },  // 18.00 - 22.00
+    };
+    const TANGGAL_ACARA = ['2026-07-05', '2026-07-06', '2026-07-07'];
+
+    /**
+     * Mengambil jam sekarang sebagai angka desimal, misal 07.30 = 7.5
+     */
+    function jamSekarang() {
       const now = new Date();
-      const jam = now.getHours();
-      let bagian = 'Pagi';
-      if (jam >= 11 && jam < 15) bagian = 'Siang';
-      else if (jam >= 15) bagian = 'Malam';
-      const match = list.find(function (s) { return s.indexOf(bagian) !== -1; });
-      return match || null;
+      return now.getHours() + now.getMinutes() / 60;
+    }
+
+    /**
+     * Mengambil tanggal sekarang dalam format YYYY-MM-DD (waktu lokal).
+     */
+    function tanggalSekarang() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + d;
+    }
+
+    /**
+     * Mengecek apakah sesi tertentu valid untuk dibuka sekarang.
+     * Mengembalikan objek:
+     *   { boleh: true }                          — jam sesuai, lanjut
+     *   { boleh: false, tipe: 'lewat', sesiAktif }  — jam sudah lewat untuk sesi ini
+     *   { boleh: false, tipe: 'belum', bukaPukul }  — sesi belum dibuka
+     *   { boleh: false, tipe: 'istirahat' }      — sedang jam istirahat
+     *   { boleh: false, tipe: 'diluar' }         — di luar tanggal/jam acara
+     *   { boleh: 'peringatan', sesiAktif }       — jam sesi lain, tapi masih boleh lanjut dengan konfirmasi
+     */
+    function cekValidasiJam(sesiDipilih) {
+      const tgl = tanggalSekarang();
+      const jam = jamSekarang();
+
+      // Cek apakah hari ini adalah hari acara
+      if (TANGGAL_ACARA.indexOf(tgl) === -1) {
+        return { boleh: false, tipe: 'diluar' };
+      }
+
+      // Cari sesi apa yang aktif sekarang berdasarkan jam
+      let sesiAktifSekarang = null;
+      const sesiKeys = Object.keys(JADWAL_SESI);
+      for (var i = 0; i < sesiKeys.length; i++) {
+        var key = sesiKeys[i];
+        var jadwal = JADWAL_SESI[key];
+        if (jam >= jadwal.buka && jam < jadwal.tutup) {
+          sesiAktifSekarang = key;
+          break;
+        }
+      }
+
+      // Ekstrak nama sesi dari format "5 Juli 2026 - Pagi" → "Pagi"
+      var bagianDipilih = sesiDipilih.split(' - ')[1]; // "Pagi", "Siang", atau "Malam"
+
+      // Jam istirahat (15.30 - 18.00) atau di luar jam acara (22.00 - 06.00)
+      if (!sesiAktifSekarang) {
+        if (jam >= 15.5 && jam < 18) {
+          return { boleh: false, tipe: 'istirahat' };
+        }
+        return { boleh: false, tipe: 'diluar' };
+      }
+
+      // Jam sesuai dengan sesi yang dipilih → lanjut
+      if (sesiAktifSekarang === bagianDipilih) {
+        return { boleh: true };
+      }
+
+      // Jam sesi ini sudah lewat (misal pilih Pagi tapi jam sudah Siang/Malam)
+      var urutanSesi = ['Pagi', 'Siang', 'Malam'];
+      var idxDipilih = urutanSesi.indexOf(bagianDipilih);
+      var idxAktif   = urutanSesi.indexOf(sesiAktifSekarang);
+
+      if (idxDipilih < idxAktif) {
+        // Sesi yang dipilih sudah lewat — beri peringatan tapi boleh lanjut
+        return { boleh: 'peringatan', tipe: 'lewat', sesiAktif: sesiAktifSekarang };
+      }
+
+      // Sesi yang dipilih belum dimulai — beri peringatan tapi boleh lanjut
+      var bukaJam = JADWAL_SESI[bagianDipilih].buka;
+      var bukaStr = Math.floor(bukaJam) + '.' + (bukaJam % 1 === 0.5 ? '30' : '00');
+      return { boleh: 'peringatan', tipe: 'belum', bukaPukul: bukaStr, sesiAktif: sesiAktifSekarang };
+    }
+
+    function tebakSesiSekarang(list) {
+      const tgl = tanggalSekarang();
+      const jam = jamSekarang();
+      // Cari label sesi yang aktif sekarang
+      let bagian = null;
+      const sesiKeys = Object.keys(JADWAL_SESI);
+      for (var i = 0; i < sesiKeys.length; i++) {
+        var key = sesiKeys[i];
+        var jadwal = JADWAL_SESI[key];
+        if (jam >= jadwal.buka && jam < jadwal.tutup) {
+          bagian = key;
+          break;
+        }
+      }
+      if (!bagian) return null;
+      const match = list.find(function (s) {
+        return s.indexOf(bagian) !== -1 && TANGGAL_ACARA.some(function (t) {
+          return s.indexOf(t.slice(5, 7).replace(/^0/, '') + ' Juli') !== -1 ||
+                 s.indexOf(tgl.slice(8).replace(/^0/, '') + ' Juli') !== -1;
+        });
+      });
+      // Fallback: cari sesi manapun yang mengandung nama bagian ini
+      return match || list.find(function (s) { return s.indexOf(bagian) !== -1; }) || null;
+    }
+
+    // Style untuk notifikasi validasi jam
+    const NOTIF_STYLE = {
+      blokir:     'background:#FDECE3;color:#9A3F1D;border:1.5px solid #F4B8A0;border-radius:14px;padding:18px 16px;margin-bottom:14px;',
+      peringatan: 'background:#FBF1D9;color:#7A5010;border:1.5px solid #E8CB80;border-radius:14px;padding:18px 16px;margin-bottom:14px;',
+      judul:      'font-size:15px;font-weight:700;margin-bottom:6px;',
+      isi:        'font-size:13.5px;line-height:1.6;',
+    };
+
+    function renderSesiCards() {
+      const grid = document.getElementById('sesiGrid');
+      if (!grid) return;
+      const sesiSekarang = tebakSesiSekarang(sesiList);
+      grid.innerHTML = sesiList
+        .map(function (s) {
+          const parts = s.split(' - ');
+          const isCurrent = s === sesiSekarang;
+          return '<button class="pick-card' + (isCurrent ? ' current' : '') + '" data-sesi="' + escapeHtml(s) + '">' +
+            '<div><div class="pick-card-title">' + escapeHtml(parts[0]) + '</div><div class="pick-card-sub">Sesi ' + escapeHtml(parts[1]) + '</div></div>' +
+            '<div style="display:flex;align-items:center;">' +
+              (isCurrent ? '<span class="current-badge">Sekarang</span>' : '') +
+              '<span class="pick-card-arrow">›</span>' +
+            '</div>' +
+            '</button>';
+        })
+        .join('');
+      grid.querySelectorAll('.pick-card').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var sesiDipilih = btn.dataset.sesi;
+          var validasi = cekValidasiJam(sesiDipilih);
+
+          if (validasi.boleh === true) {
+            // Jam sesuai — langsung lanjut
+            state.sesi = sesiDipilih;
+            goTo('unsur');
+          } else if (validasi.boleh === 'peringatan') {
+            // Jam tidak sesuai tapi masih boleh lanjut — tampilkan konfirmasi
+            tampilkanKonfirmasiJam(sesiDipilih, validasi);
+          } else {
+            // Di luar jam acara — tampilkan notifikasi blokir
+            tampilkanBlokirJam(sesiDipilih, validasi);
+          }
+        });
+      });
+    }
+
+    /**
+     * Tampilkan notifikasi blokir (tidak bisa lanjut sama sekali).
+     */
+    function tampilkanBlokirJam(sesiDipilih, validasi) {
+      var pesan = '';
+      var jam = jamSekarang();
+      var tgl = tanggalSekarang();
+      var hariAcara = TANGGAL_ACARA.indexOf(tgl) !== -1;
+
+      if (validasi.tipe === 'istirahat') {
+        pesan = '<div style="' + NOTIF_STYLE.judul + '">⏸ Sedang jam istirahat</div>' +
+          '<div style="' + NOTIF_STYLE.isi + '">Absensi sementara tidak dibuka (15.30–18.00).<br>Sesi Malam dibuka pukul <b>18.00</b>.</div>';
+      } else if (hariAcara && jam < 6) {
+        pesan = '<div style="' + NOTIF_STYLE.judul + '">🕕 Belum waktunya</div>' +
+          '<div style="' + NOTIF_STYLE.isi + '">Absensi Sesi Pagi baru dibuka pukul <b>06.00</b>.</div>';
+      } else if (hariAcara && jam >= 22) {
+        pesan = '<div style="' + NOTIF_STYLE.judul + '">🌙 Sesi Malam sudah selesai</div>' +
+          '<div style="' + NOTIF_STYLE.isi + '">Semua sesi hari ini sudah selesai (tutup pukul 22.00).</div>';
+      } else {
+        pesan = '<div style="' + NOTIF_STYLE.judul + '">📅 Di luar tanggal acara</div>' +
+          '<div style="' + NOTIF_STYLE.isi + '">Absensi hanya dibuka pada tanggal acara CAI 47 2026 (5–7 Juli 2026).</div>';
+      }
+      var existing = document.getElementById('notifJam');
+      if (existing) existing.remove();
+      var notif = document.createElement('div');
+      notif.id = 'notifJam';
+      notif.style.cssText = NOTIF_STYLE.blokir;
+      notif.innerHTML = pesan;
+      document.getElementById('sesiGrid').after(notif);
+    }
+
+    /**
+     * Tampilkan konfirmasi peringatan (jam tidak sesuai tapi boleh lanjut).
+     */
+    function tampilkanKonfirmasiJam(sesiDipilih, validasi) {
+      var bagianDipilih = sesiDipilih.split(' - ')[1];
+      var pesan = '';
+      if (validasi.tipe === 'lewat') {
+        pesan = '<div style="' + NOTIF_STYLE.judul + '">⚠️ Sesi ' + bagianDipilih + ' sudah lewat</div>' +
+          '<div style="' + NOTIF_STYLE.isi + '">Sekarang sedang <b>Sesi ' + validasi.sesiAktif + '</b>.<br>' +
+          'Anda masih bisa absen untuk Sesi ' + bagianDipilih + ' jika belum sempat tadi.</div>';
+      } else {
+        pesan = '<div style="' + NOTIF_STYLE.judul + '">⚠️ Sesi ' + bagianDipilih + ' belum dimulai</div>' +
+          '<div style="' + NOTIF_STYLE.isi + '">Sesi ' + bagianDipilih + ' baru dibuka pukul <b>' + validasi.bukaPukul + '</b>.<br>' +
+          'Sekarang sedang <b>Sesi ' + validasi.sesiAktif + '</b>.</div>';
+      }
+
+      var existing = document.getElementById('notifJam');
+      if (existing) existing.remove();
+      var notif = document.createElement('div');
+      notif.id = 'notifJam';
+      notif.style.cssText = NOTIF_STYLE.peringatan;
+      notif.innerHTML = pesan +
+        '<div style="display:flex;gap:10px;margin-top:14px;">' +
+          '<button onclick="(function(){document.getElementById(\'notifJam\').remove();state.sesi=\'' + sesiDipilih.replace(/'/g, "\\'") + '\';goTo(\'unsur\');})()" ' +
+            'style="flex:1;background:#1A2440;color:#fff;border:none;border-radius:10px;padding:11px 0;font-size:14px;font-weight:600;cursor:pointer;">' +
+            'Tetap absen Sesi ' + bagianDipilih +
+          '</button>' +
+          '<button onclick="document.getElementById(\'notifJam\').remove()" ' +
+            'style="flex:1;background:transparent;border:1.5px solid #E8CB80;color:#7A5010;border-radius:10px;padding:11px 0;font-size:14px;font-weight:600;cursor:pointer;">' +
+            'Batal' +
+          '</button>' +
+        '</div>';
+      document.getElementById('sesiGrid').after(notif);
     }
 
     function renderBreadcrumb() {
